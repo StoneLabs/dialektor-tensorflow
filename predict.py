@@ -19,9 +19,11 @@ classes = 2  # digits
 print("-> Loading")
 print("Creating network... ")
 net = tflearn.input_data([None, width, height])
-# net = tflearn.embedding(net, input_dim=10000, output_dim=128)
-net = tflearn.lstm(net, 128, dropout=0.8)
-net = tflearn.fully_connected(net, classes, activation='softmax')
+#net = tflearn.embedding(net, input_dim=10000, output_dim=128)
+net = tflearn.lstm(net, 256, dropout=0.8)
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
 net = tflearn.regression(net, optimizer='adam', learning_rate=learning_rate, loss='categorical_crossentropy')
 # Training
 print("Creating model... ")
@@ -51,4 +53,4 @@ else:
     print("Loading " + str(file) + " with " + str(np.array(mfcc).shape)) # Debug
 
 print("-> Predicting data")
-print(model.predict([mfcc]))
+print(model.predict([mfcc])[0])

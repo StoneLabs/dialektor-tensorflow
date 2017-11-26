@@ -68,9 +68,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33, random
 
 print("Creating network... ")
 net = tflearn.input_data([None, width, height])
-# net = tflearn.embedding(net, input_dim=10000, output_dim=128)
-net = tflearn.lstm(net, 128, dropout=0.8)
-net = tflearn.fully_connected(net, classes, activation='softmax')
+#net = tflearn.embedding(net, input_dim=10000, output_dim=128)
+net = tflearn.lstm(net, 256, dropout=0.8)
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
+net = tflearn.fully_connected(net, classes, activation='softmax', regularizer='L2')
 net = tflearn.regression(net, optimizer='adam', learning_rate=learning_rate, loss='categorical_crossentropy')
 # Training
 print("Creating model... ")
