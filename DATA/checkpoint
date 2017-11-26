@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/stone/Repos/dialektor/dialektor-tensorflow/DATA/tflearn.lstm.model"
+all_model_checkpoint_paths: "/home/stone/Repos/dialektor/dialektor-tensorflow/DATA/tflearn.lstm.model"
