@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.style as ms
 
 learning_rate = 0.0001
-training_iters = 300000  # steps
+training_iters = 10  # steps
 batch_size = 10000
 
 width = 20  # mfcc features
@@ -72,11 +72,14 @@ print("Creating model... ")
 model = tflearn.DNN(net, tensorboard_verbose=0)
 #model.load("tflearn.lstm.model")
 print("Training... ?")
-while 1: #training_iters
+for i in range(0, training_iters):
   model.fit(trainX, trainY, n_epoch=100, validation_set=(testX, testY), show_metric=True,
           batch_size=batch_size)
-  _y=model.predict(X)
 print("Saving model... [tflearn.lstm.model]")
 model.save("tflearn.lstm.model")
+
+_y=model.predict(X)
+print("Training prediction:")
 print (_y)
+print("Actual values:")
 print (Y)
