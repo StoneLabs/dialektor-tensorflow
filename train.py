@@ -9,9 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.style as ms
 
+os.chdir('DATA/')
+
 learning_rate = 0.0001
-training_iters = 1  # steps
-epoch_length = 25  # steps
+training_iters = 25  # steps
+epoch_length = 100  # steps
 batch_size = 10000
 
 width = 20  # mfcc features
@@ -20,7 +22,6 @@ classes = 2  # digits
 
 
 def mfcc_batch_generator(batch_size = 10):
-    os.chdir('DATA/')
     audio_files = os.listdir(os.getcwd())
     batch_features = []
     labels = []
@@ -79,8 +80,14 @@ print("Training... ")
 for i in range(0, training_iters):
   model.fit(X_train, y_train, n_epoch=epoch_length, validation_set=0.1, show_metric=True,
           batch_size=batch_size)
+
 print("Saving model... [tflearn.lstm.model]")
 model.save("tflearn.lstm.model")
+
+#import pickle
+#print("Pickling model... [export_model.dat]")
+#with open("export_model.dat", "wb+") as handle:
+#	pickle.dump(model, handle)
 
 ###
 ### Evaluating performance
@@ -92,6 +99,10 @@ p_test = model.predict(X_test)
 
 # Advanced performance analzsis
 print("\n\nTraining data:")
+print("\n\nTraining data:", file=open("evaluation.txt", "a"))
 print(metrics.classification_report(np.argmax(y_train, axis=1), np.argmax(p_train, axis=1), target_names=["SD", "HD"]))
+print(metrics.classification_report(np.argmax(y_train, axis=1), np.argmax(p_train, axis=1), target_names=["SD", "HD"]), file=open("evaluation.txt", "a"))
 print("\n\nTest data:")
+print("\n\nTest data:", file=open("evaluation.txt", "a"))
 print(metrics.classification_report(np.argmax(y_test, axis=1), np.argmax(p_test, axis=1), target_names=["SD", "HD"]))
+print(metrics.classification_report(np.argmax(y_test, axis=1), np.argmax(p_test, axis=1), target_names=["SD", "HD"]), file=open("evaluation.txt", "a"))

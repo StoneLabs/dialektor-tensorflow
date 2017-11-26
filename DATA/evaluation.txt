@@ -1,0 +1,19 @@
+
+
+Training data:
+             precision    recall  f1-score   support
+
+         SD       1.00      0.94      0.97        16
+         HD       0.00      0.00      0.00         0
+
+avg / total       1.00      0.94      0.97        16
+
+
+
+Test data:
+             precision    recall  f1-score   support
+
+         SD       1.00      1.00      1.00         9
+
+avg / total       1.00      1.00      1.00         9
+
