@@ -11,10 +11,10 @@ import matplotlib.style as ms
 
 learning_rate = 0.0001
 training_iters = 300000  # steps
-batch_size = 10
+batch_size = 10000
 
 width = 20  # mfcc features
-height = 431
+height = 432
 classes = 2  # digits
 
 
@@ -23,10 +23,15 @@ def mfcc_batch_generator(batch_size = 10):
     audio_files = os.listdir(os.getcwd())
     batch_features = []
     labels = []
+    counter = 0
     for file in audio_files:
+        counter+=1
         if not file.endswith(".wav"): continue
         wave, sr = librosa.load(file, mono=True)
         mfcc = librosa.feature.mfcc(wave, sr)
+        if (len(mfcc[0]) != height):
+            print("File too long/short -> skipping.")
+            continue
 
         # Append class
         label = [0]*classes;
@@ -38,7 +43,7 @@ def mfcc_batch_generator(batch_size = 10):
         # Magic?
         #mfcc=np.pad(mfcc,((0,0),(0,80-len(mfcc[0]))), mode='constant', constant_values=0)
         batch_features.append(np.array(mfcc))
-        if len(batch_features) >= batch_size:
+        if len(batch_features) >= batch_size or counter == len(audio_files):
             # if target == Target.word:  labels = sparse_labels(labels)
             # labels=np.array(labels)
             # print(np.array(batch_features).shape)
@@ -49,7 +54,7 @@ def mfcc_batch_generator(batch_size = 10):
             labels = []
 
 print("Loading data... ")
-batch = word_batch = mfcc_batch_generator(2)
+batch = word_batch = mfcc_batch_generator(batch_size)
 X, Y = next(batch)
 
 trainX, trainY = X, Y
