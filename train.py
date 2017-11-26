@@ -9,56 +9,69 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.style as ms
 
-# now put all of the mfccs into an array
-#os.chdir('/home/cc/Data/' + path)
-os.chdir('DATA/')
-audio_files = os.listdir(os.getcwd())
-mfccs = []
-classes = []
-for f in audio_files:
-#    y, sr = librosa.load(f)
-#    classes.append(f.split("_")[1])
-#    mfccs.append(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13))
+learning_rate = 0.0001
+training_iters = 300000  # steps
+batch_size = 10
 
-net = tflearn.input_data(shape=[None, 13, 22]) #Two wave chunks
-net = tflearn.fully_connected(net, 64)
-net = tflearn.dropout(net, 0.5)
-net = tflearn.fully_connected(net, 15, activation='softmax')
-net = tflearn.regression(net, optimizer='adam', loss='categorical_crossentropy')
-
-model = tflearn.DNN(net)
-model.fit(mfccs, classes, n_epoch=500, show_metric=True, snapshot_step=100)
+width = 20  # mfcc features
+height = 431
+classes = 2  # digits
 
 
-def mfcc_batch_generator(batch_size=10, source=Source.DIGIT_WAVES, target=Target.digits):
-	if target == Target.speaker: speakers = get_speakers()
-	batch_features = []
-	labels = []
-	files = os.listdir(path)
-	while True:
-		print("loaded batch of %d files" % len(files))
-		shuffle(files)
-		for file in files:
-			if not file.endswith(".wav"): continue
-			wave, sr = librosa.load(path+file, mono=True)
-			mfcc = librosa.feature.mfcc(wave, sr)
-			if target==Target.speaker: label=one_hot_from_item(speaker(file), speakers)
-			elif target==Target.digits:  label=dense_to_one_hot(int(file[0]),10)
-			elif target==Target.first_letter:  label=dense_to_one_hot((ord(file[0]) - 48) % 32,32)
-			elif target == Target.hotword: label = one_hot_word(file, pad_to=max_word_length)  #
-			elif target == Target.word: label=string_to_int_word(file, pad_to=max_word_length)
-				# label = file  # sparse_labels(file, pad_to=20)  # max_output_length
-			else: raise Exception("todo : labels for Target!")
-			labels.append(label)
-			# print(np.array(mfcc).shape)
-			mfcc=np.pad(mfcc,((0,0),(0,80-len(mfcc[0]))), mode='constant', constant_values=0)
-			batch_features.append(np.array(mfcc))
-			if len(batch_features) >= batch_size:
-				# if target == Target.word:  labels = sparse_labels(labels)
-				# labels=np.array(labels)
-				# print(np.array(batch_features).shape)
-				# yield np.array(batch_features), labels
-				# print(np.array(labels).shape) # why (64,) instead of (64, 15, 32)? OK IFF dim_1==const (20)
-				yield batch_features, labels  # basic_rnn_seq2seq inputs must be a sequence
-				batch_features = []  # Reset for next batch
-				labels = []
+def mfcc_batch_generator(batch_size = 10):
+    os.chdir('DATA/')
+    audio_files = os.listdir(os.getcwd())
+    batch_features = []
+    labels = []
+    for file in audio_files:
+        if not file.endswith(".wav"): continue
+        wave, sr = librosa.load(file, mono=True)
+        mfcc = librosa.feature.mfcc(wave, sr)
+
+        # Append class
+        label = [0]*classes;
+        label[int(file.split("_")[1])] = 1
+        labels.append(label);
+
+        print("Loading " + str(file) + " with " + str(np.array(mfcc).shape)) # Debug
+
+        # Magic?
+        #mfcc=np.pad(mfcc,((0,0),(0,80-len(mfcc[0]))), mode='constant', constant_values=0)
+        batch_features.append(np.array(mfcc))
+        if len(batch_features) >= batch_size:
+            # if target == Target.word:  labels = sparse_labels(labels)
+            # labels=np.array(labels)
+            # print(np.array(batch_features).shape)
+            # yield np.array(batch_features), labels
+            # print(np.array(labels).shape) # why (64,) instead of (64, 15, 32)? OK IFF dim_1==const (20)
+            yield batch_features, labels  # basic_rnn_seq2seq inputs must be a sequence
+            batch_features = []  # Reset for next batch
+            labels = []
+
+print("Loading data... ")
+batch = word_batch = mfcc_batch_generator(2)
+X, Y = next(batch)
+
+trainX, trainY = X, Y
+testX, testY = X, Y #overfit for now
+
+
+print("Creating network... ")
+net = tflearn.input_data([None, width, height])
+# net = tflearn.embedding(net, input_dim=10000, output_dim=128)
+net = tflearn.lstm(net, 128, dropout=0.8)
+net = tflearn.fully_connected(net, classes, activation='softmax')
+net = tflearn.regression(net, optimizer='adam', learning_rate=learning_rate, loss='categorical_crossentropy')
+# Training
+print("Creating model... ")
+model = tflearn.DNN(net, tensorboard_verbose=0)
+#model.load("tflearn.lstm.model")
+print("Training... ?")
+while 1: #training_iters
+  model.fit(trainX, trainY, n_epoch=100, validation_set=(testX, testY), show_metric=True,
+          batch_size=batch_size)
+  _y=model.predict(X)
+print("Saving model... [tflearn.lstm.model]")
+model.save("tflearn.lstm.model")
+print (_y)
+print (Y)
