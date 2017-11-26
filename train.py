@@ -78,10 +78,14 @@ model = tflearn.DNN(net, tensorboard_verbose=0)
 #model.load("tflearn.lstm.model")
 print("Training... ")
 for i in range(0, training_iters):
-  model.fit(X_train, y_train, n_epoch=epoch_length, validation_set=0.1, show_metric=True,
+    model.fit(X_train, y_train, n_epoch=epoch_length, validation_set=0.1, show_metric=True,
           batch_size=batch_size)
+    try:
+        input("Press Enter to continue... [Ctrl+C if done]")
+    except KeyboardInterrupt as identifier:
+        break
 
-print("Saving model... [tflearn.lstm.model]")
+print("\n\nSaving model... [tflearn.lstm.model]")
 model.save("tflearn.lstm.model")
 
 #import pickle
