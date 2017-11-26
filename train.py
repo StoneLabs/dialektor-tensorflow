@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib.style as ms
 
 learning_rate = 0.0001
-training_iters = 5  # steps
-epoch_length = 100  # steps
+training_iters = 1  # steps
+epoch_length = 25  # steps
 batch_size = 10000
 
 width = 20  # mfcc features
@@ -31,15 +31,18 @@ def mfcc_batch_generator(batch_size = 10):
         wave, sr = librosa.load(file, mono=True)
         mfcc = librosa.feature.mfcc(wave, sr)
         if (len(mfcc[0]) != height):
-            print("File too long/short -> skipping.")
-            continue
+            print("Loading " + str(file) + " with " + str(np.array(mfcc).shape) +
+                    " reshaping " + str(np.shape(mfcc)) + " to ", end = '') # Debug
+            mfcc.resize(width, height)
+            print(str(np.shape(mfcc)))
+        else:
+            print("Loading " + str(file) + " with " + str(np.array(mfcc).shape)) # Debug
+
 
         # Append class
         label = [0]*classes;
         label[int(file.split("_")[1])] = 1
         labels.append(label);
-
-        print("Loading " + str(file) + " with " + str(np.array(mfcc).shape)) # Debug
 
         # Magic?
         #mfcc=np.pad(mfcc,((0,0),(0,80-len(mfcc[0]))), mode='constant', constant_values=0)
@@ -58,8 +61,8 @@ print("Loading data... ")
 batch = word_batch = mfcc_batch_generator(batch_size)
 X, Y = next(batch)
 
-trainX, trainY = X, Y
-testX, testY = X, Y #overfit for now
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
 
 print("Creating network... ")
@@ -74,13 +77,21 @@ model = tflearn.DNN(net, tensorboard_verbose=0)
 #model.load("tflearn.lstm.model")
 print("Training... ")
 for i in range(0, training_iters):
-  model.fit(trainX, trainY, n_epoch=epoch_length, validation_set=(testX, testY), show_metric=True,
+  model.fit(X_train, y_train, n_epoch=epoch_length, validation_set=0.1, show_metric=True,
           batch_size=batch_size)
 print("Saving model... [tflearn.lstm.model]")
 model.save("tflearn.lstm.model")
 
-_y=model.predict(X)
-print("Training prediction:")
-print (_y)
-print("Actual values:")
-print (Y)
+###
+### Evaluating performance
+###
+from sklearn import metrics
+
+p_train = model.predict(X_train)
+p_test = model.predict(X_test)
+
+# Advanced performance analzsis
+print("\n\nTraining data:")
+print(metrics.classification_report(np.argmax(y_train, axis=1), np.argmax(p_train, axis=1), target_names=["SD", "HD"]))
+print("\n\nTest data:")
+print(metrics.classification_report(np.argmax(y_test, axis=1), np.argmax(p_test, axis=1), target_names=["SD", "HD"]))
